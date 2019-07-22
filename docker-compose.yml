@@ -1,0 +1,63 @@
+version: '3.5'
+
+services:
+  backend:
+    build:
+      context: .
+      target: backend
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      RABBITMQ_PASS: ${RABBITMQ_PASS}
+      SECRET_KEY: ${SECRET_KEY}
+      HOSTNAME: ${HOSTNAME}
+    volumes:
+      - media:/taiga-back/media
+      - static:/taiga-back/static
+
+  frontend:
+    build:
+      context: .
+      target: frontend
+    restart: always
+    environment:
+      HOSTNAME: ${HOSTNAME}
+    volumes:
+      - media:/media
+      - static:/static
+    ports:
+      - 80:80
+
+  events:
+    build:
+      context: .
+      target: events
+    restart: always
+    environment:
+      RABBITMQ_PASS: ${RABBITMQ_PASS}
+      SECRET_KEY: ${SECRET_KEY}
+
+  postgres:
+    image: postgres:11.4-alpine
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: taiga
+      POSTGRES_DB: taiga
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+  rabbitmq:
+    image: rabbitmq:3.7.16-alpine
+    volumes:
+      - mq_data:/var/lib/rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_VHOST: taiga
+      RABBITMQ_DEFAULT_USER: taiga
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
+
+
+volumes:
+  pg_data: {}
+  mq_data: {}
+  media: {}
+  static: {}
